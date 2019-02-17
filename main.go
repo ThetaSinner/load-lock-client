@@ -32,5 +32,12 @@ func main() {
 		Group: "abc"}
 	var msg, _ = json.Marshal(registration)
 
+	subscription := client.Subscribe("load-lock:start:abc-123").Channel()
+
 	client.LPush("load-lock:registration-queue", msg)
+
+	fmt.Println("Listening on subscribed channels...")
+	<-subscription
+
+	fmt.Println("All done, this can now run")
 }
