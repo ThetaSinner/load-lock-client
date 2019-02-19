@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"os"
 
@@ -15,6 +16,34 @@ type registration struct {
 }
 
 func main() {
+	var idFlag string
+	flag.StringVar(&idFlag, "id", "", "The id that the client will use")
+
+	var groupFlag string
+	flag.StringVar(&groupFlag, "group", "", "The group that the client will use")
+
+	isRegisterPtr := flag.Bool("register", false, "Whether to use this client session to register")
+
+	flag.Parse()
+
+	if idFlag == "" {
+		panic("Missing --id flag")
+	}
+
+	if groupFlag == "" {
+		panic("Missing --group flag")
+	}
+
+	if *isRegisterPtr {
+		fmt.Printf("Will perform a registration. [id=%s], [group=%s]\n", idFlag, groupFlag)
+		runRegistration(idFlag, groupFlag)
+		return
+	}
+
+	fmt.Println("You didn't specify a valid command")
+}
+
+func createClient() *redis.Client {
 	client := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
 		Password: "", // no password set
@@ -27,12 +56,19 @@ func main() {
 		os.Exit(1)
 	}
 
+	return client
+}
+
+func runRegistration(idFlag string, groupFlag string) {
+	client := createClient()
+
 	var registration = &registration{
-		Id:    "abc-123",
-		Group: "abc"}
+		Id:    idFlag,
+		Group: groupFlag}
 	var msg, _ = json.Marshal(registration)
 
-	subscription := client.Subscribe("load-lock:start:abc-123").Channel()
+	subChannel := fmt.Sprintf("load-lock:start:%s", idFlag)
+	subscription := client.Subscribe(subChannel).Channel()
 
 	client.LPush("load-lock:registration-queue", msg)
 
