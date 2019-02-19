@@ -24,19 +24,31 @@ func main() {
 
 	isRegisterPtr := flag.Bool("register", false, "Whether to use this client session to register")
 
+	isReleasePtr := flag.Bool("release", false, "Whether to use this client session to release")
+
 	flag.Parse()
 
 	if idFlag == "" {
 		panic("Missing --id flag")
 	}
 
-	if groupFlag == "" {
+	if *isRegisterPtr && groupFlag == "" {
 		panic("Missing --group flag")
+	}
+
+	if *isRegisterPtr && *isReleasePtr {
+		panic("Cannot register and release in the same session!")
 	}
 
 	if *isRegisterPtr {
 		fmt.Printf("Will perform a registration. [id=%s], [group=%s]\n", idFlag, groupFlag)
 		runRegistration(idFlag, groupFlag)
+		return
+	}
+
+	if *isReleasePtr {
+		fmt.Printf("Will perform a release. [id=%s]\n", idFlag)
+		runRelease(idFlag)
 		return
 	}
 
@@ -76,4 +88,12 @@ func runRegistration(idFlag string, groupFlag string) {
 	<-subscription
 
 	fmt.Println("All done, this can now run")
+}
+
+func runRelease(idFlag string) {
+	client := createClient()
+
+	client.LPush("load-lock:release-queue", idFlag)
+
+	fmt.Println("Release notified. You can go about your day knowing you've done a good thing!")
 }
