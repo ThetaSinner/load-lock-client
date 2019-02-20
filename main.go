@@ -11,7 +11,7 @@ import (
 
 // Registration model
 type registration struct {
-	Id    string
+	ID    string
 	Group string
 }
 
@@ -75,7 +75,7 @@ func runRegistration(idFlag string, groupFlag string) {
 	client := createClient()
 
 	var registration = &registration{
-		Id:    idFlag,
+		ID:    idFlag,
 		Group: groupFlag}
 	var msg, _ = json.Marshal(registration)
 
