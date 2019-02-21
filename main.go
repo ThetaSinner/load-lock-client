@@ -32,7 +32,7 @@ func main() {
 		panic("Missing --id flag")
 	}
 
-	if *isRegisterPtr && groupFlag == "" {
+	if groupFlag == "" {
 		panic("Missing --group flag")
 	}
 
@@ -47,8 +47,8 @@ func main() {
 	}
 
 	if *isReleasePtr {
-		fmt.Printf("Will perform a release. [id=%s]\n", idFlag)
-		runRelease(idFlag)
+		fmt.Printf("Will perform a release. [id=%s], [group=%s]\n", idFlag, groupFlag)
+		runRelease(idFlag, groupFlag)
 		return
 	}
 
@@ -90,10 +90,15 @@ func runRegistration(idFlag string, groupFlag string) {
 	fmt.Println("All done, this can now run")
 }
 
-func runRelease(idFlag string) {
+func runRelease(idFlag string, groupFlag string) {
 	client := createClient()
 
-	client.LPush("load-lock:release-queue", idFlag)
+	var registration = &registration{
+		ID:    idFlag,
+		Group: groupFlag}
+	var msg, _ = json.Marshal(registration)
+
+	client.LPush("load-lock:release-queue", msg)
 
 	fmt.Println("Release notified. You can go about your day knowing you've done a good thing!")
 }
